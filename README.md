@@ -52,3 +52,8 @@ Se quiser inventar uma fase nova:
 Adicionando um novo modo:
     
         Insane: { enemyCount: 40, enemySpeedMin: 5, enemySpeedMax: 12 } 
+
+# Os triângulos amarelos, que dão pontos, seguem o mesmo estilo da dificuldade.
+
+        <canvas id="GameCanvas" mode="Easy" collect="Easy"></canvas>
+Assim, terão diversos triângulos para serem coletados, mas de acordo com a mudança de dificuldade, a quantidade será variada
