@@ -1,59 +1,22 @@
 # Framework-JogoFinal
 
-## O jogo possui três níveis de dificuldade, cada um com mais inimigos e velocidades maiores:
+##Funcionalidades Principais
+O jogador é um quadrado que se move com as setas do teclado.
+A posição, tamanho e cor (x->posição horizontal y->posição vertical size->tamanho e cor) podem ser definidos no próprio HTML:
+        
+        <player x="200" y="200" size="40" cor="blue"></player>   
+        
+Cada inimigo é uma bola com direção e velocidade própria.
+Eles quicam nas paredes e também nos obstáculos do mapa.
 
-    Easy (Fácil)
+    <enemy x="50" y="60" raio="25" dx="2" dy="3"></enemy>
     
-    5 inimigos
-    
-    Velocidade baixa (1–3)
-    
-    
-    Medium (Médio)
-    
-    13 inimigos
-    
-    Velocidade moderada (2–5)
-    
-    
-    Hard (Difícil)
-    
-    20 inimigos
+Você pode criar quantos obstáculos quiser com:
 
-    Velocidade alta (3–7)
-    
+    <obstaculo x="0" y="10" largura="200" altura="20" cor="black"></obstaculo>
 
-## Como alterar a dificuldade
+##Dificuldade do jogo:
+Pode ser alterada com a tag config, como mostrado abaixo:
 
-A dificuldade é escolhida diretamente no HTML, no atributo mode do canvas.
-
-Exemplo no HTML:
-
-        <canvas id="GameCanvas" mode="Hard"></canvas>
-        <canvas id="GameCanvas" mode="Easy"></canvas> 
-        <canvas id="GameCanvas" mode="Medium"></canvas> 
-
-
-## Como criar uma nova fase
-
-Se quiser inventar uma fase nova:
-    Basta editar esta parte no arquivo funcoes.js:
-
-        getDifficultySettings(mode) {
-        const modes = {
-            Easy:   { enemyCount: 5,  enemySpeedMin: 1, enemySpeedMax: 3 },
-            Medium: { enemyCount: 13, enemySpeedMin: 2, enemySpeedMax: 5 },
-            Hard:   { enemyCount: 20, enemySpeedMin: 3, enemySpeedMax: 7 }
-        };
-    
-        return modes[mode] || modes.Easy;
-        } 
-
-Adicionando um novo modo:
-    
-        Insane: { enemyCount: 40, enemySpeedMin: 5, enemySpeedMax: 12 } 
-
-# Os triângulos amarelos, que dão pontos, seguem o mesmo estilo da dificuldade.
-
-        <canvas id="GameCanvas" mode="Easy" collect="Easy"></canvas>
-Assim, terão diversos triângulos para serem coletados, mas de acordo com a mudança de dificuldade, a quantidade será variada
+    <config dificuldade="Hard"></config>
+Temos a dificuldade Easy, Medium e Hard. Se deixar vazio ou colocar algo inválido, o modo Easy é aplicado automaticamente.
