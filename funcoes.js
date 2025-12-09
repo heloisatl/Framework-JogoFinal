@@ -1,6 +1,6 @@
 class EnemyDodgeGame {
     constructor(canvasId) {
-        this.canvasId = canvasId; 
+        this.canvasId = canvasId;
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
 
@@ -8,7 +8,10 @@ class EnemyDodgeGame {
         this.canvas.height = this.canvas.offsetHeight;
 
         const mode = this.canvas.getAttribute("mode") || "Easy";
+        const collectMode = this.canvas.getAttribute("collect") || "Easy";
+
         this.settings = this.getDifficultySettings(mode);
+        this.collectSettings = this.getcollectettings(collectMode);
 
         this.square = {
             x: 200,
@@ -19,20 +22,32 @@ class EnemyDodgeGame {
         };
 
         this.enemies = [];
-        this.gameOver = false;
+        this.collect = [];
+        this.points = 0;
 
-        this.restartBtn = null; 
+        this.gameOver = false;
+        this.restartBtn = null;
 
         this.createEnemies();
+        this.createcollect();
         this.addControls();
         this.loop();
     }
 
     getDifficultySettings(mode) {
         const modes = {
-            Easy:   { enemyCount: 5,  enemySpeedMin: 1, enemySpeedMax: 3 },
+            Easy: { enemyCount: 5, enemySpeedMin: 1, enemySpeedMax: 3 },
             Medium: { enemyCount: 13, enemySpeedMin: 2, enemySpeedMax: 5 },
-            Hard:   { enemyCount: 20, enemySpeedMin: 3, enemySpeedMax: 7 }
+            Hard: { enemyCount: 20, enemySpeedMin: 3, enemySpeedMax: 7 }
+        };
+        return modes[mode] || modes.Easy;
+    }
+
+    getcollectettings(mode) {
+        const modes = {
+            Easy: { count: 5, respawnTime: 1000 },
+            Medium: { count: 6, respawnTime: 2000 },
+            Hard: { count: 2, respawnTime: 5000 }
         };
         return modes[mode] || modes.Easy;
     }
@@ -48,6 +63,22 @@ class EnemyDodgeGame {
                 color: "red"
             });
         }
+    }
+
+    createcollect() {
+        for (let i = 0; i < this.collectSettings.count; i++) {
+            this.collect.push(this.createTriangle());
+        }
+    }
+
+    createTriangle() {
+        return {
+            x: Math.random() * this.canvas.width,
+            y: Math.random() * this.canvas.height,
+            size: 25,
+            color: "yellow",
+            collected: false
+        };
     }
 
     addControls() {
@@ -78,6 +109,21 @@ class EnemyDodgeGame {
         }
     }
 
+    drawcollect() {
+        for (let item of this.collect) {
+            if (item.collected) continue;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(item.x, item.y - item.size);
+            this.ctx.lineTo(item.x - item.size, item.y + item.size);
+            this.ctx.lineTo(item.x + item.size, item.y + item.size);
+            this.ctx.closePath();
+
+            this.ctx.fillStyle = item.color;
+            this.ctx.fill();
+        }
+    }
+
     moveEnemies() {
         for (let enemy of this.enemies) {
             enemy.x += enemy.dx;
@@ -103,7 +149,28 @@ class EnemyDodgeGame {
 
             if (Math.sqrt(dx * dx + dy * dy) < enemy.radius) {
                 this.gameOver = true;
-                this.showRestartButton(); 
+                this.showRestartButton();
+            }
+        }
+    }
+
+    checkCollectibleCollision() {
+        for (let item of this.collect) {
+            if (item.collected) continue;
+
+            let insideX = this.square.x < item.x + item.size &&
+                this.square.x + this.square.size > item.x - item.size;
+
+            let insideY = this.square.y < item.y + item.size &&
+                this.square.y + this.square.size > item.y - item.size;
+
+            if (insideX && insideY) {
+                item.collected = true;
+                this.points++;
+
+                setTimeout(() => {
+                    Object.assign(item, this.createTriangle());
+                }, this.collectSettings.respawnTime);
             }
         }
     }
@@ -112,13 +179,18 @@ class EnemyDodgeGame {
         this.restartBtn = document.createElement("button");
         this.restartBtn.innerText = "Recomeçar";
         this.restartBtn.className = "restart-btn";
-
         document.body.appendChild(this.restartBtn);
 
         this.restartBtn.addEventListener("click", () => {
             this.restartBtn.remove();
-            new EnemyDodgeGame(this.canvasId); // reinicia 
+            new EnemyDodgeGame(this.canvasId);
         });
+    }
+
+    drawPoints() {
+        this.ctx.fillStyle = "black";
+        this.ctx.font = "28px Arial";
+        this.ctx.fillText("Pontos: " + this.points, 20, 40);
     }
 
     loop() {
@@ -133,8 +205,12 @@ class EnemyDodgeGame {
 
         this.drawSquare();
         this.drawEnemies();
+        this.drawcollect();
+        this.drawPoints();
+
         this.moveEnemies();
         this.checkCollision();
+        this.checkCollectibleCollision();
 
         requestAnimationFrame(() => this.loop());
     }
