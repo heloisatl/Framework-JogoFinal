@@ -8,17 +8,20 @@
     
     Velocidade baixa (1–3)
     
+    
     Medium (Médio)
     
     13 inimigos
     
     Velocidade moderada (2–5)
     
+    
     Hard (Difícil)
     
     20 inimigos
 
     Velocidade alta (3–7)
+    
 
 ## Como alterar a dificuldade
 
