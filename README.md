@@ -16,7 +16,7 @@ Você pode criar quantos obstáculos quiser com:
 
     <obstaculo x="0" y="10" largura="200" altura="20" cor="black"></obstaculo>
 
-##Dificuldade do jogo:
+## Dificuldade do jogo:
 Pode ser alterada com a tag config, como mostrado abaixo:
 
     <config dificuldade="Hard"></config>
