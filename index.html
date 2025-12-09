@@ -2,25 +2,33 @@
 <html lang="pt-br">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Runner </title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="estilos.css">
+    <meta charset="UTF-8" />
+    <title>Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="estilos.css" />
 </head>
 
 <body>
-
     <div class="game-board">
         <h1 class="game-board-title">Runner Game</h1>
-        
-        <h2 class="game-board-title2">Colete o máximo de triângulos que conseguir sem ser atingido pelo círculo</h1>
+        <div id="game-container" width="700" height="500">
+            <player x="200" y="200" size="40" cor="blue"></player>
+            <enemy x="50" y="60" raio="25" dx="2" dy="3"></enemy>
+            <enemy x="300" y="200" raio="20" dx="4" dy="5"></enemy>
+            <enemy x="500" y="600" raio="25" dx="2" dy="2"></enemy>
+            <obstaculo x="0" y="10" largura="200" altura="20" cor="black"></obstaculo>
+            <obstaculo x="350" y="250" largura="10" altura="20" cor="black"></obstaculo>
+            <config dificuldade="Hard"></config>
 
-        <canvas id="EasyCanvas" mode="Easy" collect="Easy"></canvas>
+            
+        </div>
     </div>
 
     <script src="funcoes.js"></script>
-    <script> new EnemyDodgeGame("EasyCanvas"); </script>
-
+    <script>
+        
+        new FrameworkJogo(document.querySelector("#game-container"));
+    </script>
 </body>
 
 </html>

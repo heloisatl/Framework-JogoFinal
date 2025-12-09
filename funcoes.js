@@ -1,216 +1,303 @@
-class EnemyDodgeGame {
-    constructor(canvasId) {
-        this.canvasId = canvasId;
-        this.canvas = document.getElementById(canvasId);
-        this.ctx = this.canvas.getContext('2d');
+class FrameworkJogo {
+    constructor(container) {
+        this.container = container;
 
-        this.canvas.width = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
+        this.canvas = document.createElement("canvas");
+        this.ctx = this.canvas.getContext("2d");
 
-        const mode = this.canvas.getAttribute("mode") || "Easy";
-        const collectMode = this.canvas.getAttribute("collect") || "Easy";
+        const attrW = Number(container.getAttribute("width"));
+        const attrH = Number(container.getAttribute("height"));
+        const useW = (Number.isFinite(attrW) && attrW > 0) ? attrW : container.clientWidth || 600;
+        const useH = (Number.isFinite(attrH) && attrH > 0) ? attrH : container.clientHeight || 400;
 
-        this.settings = this.getDifficultySettings(mode);
-        this.collectSettings = this.getcollectettings(collectMode);
+        this.canvas.width = useW;
+        this.canvas.height = useH;
 
-        this.square = {
-            x: 200,
-            y: 200,
-            size: 50,
-            color: "blue",
-            speed: 20
-        };
+        this.canvas.style.width = "100%";
+        this.canvas.style.height = "100%";
 
-        this.enemies = [];
-        this.collect = [];
-        this.points = 0;
+        container.appendChild(this.canvas);
+
 
         this.gameOver = false;
-        this.restartBtn = null;
 
-        this.createEnemies();
-        this.createcollect();
+
+        this.triangulos = [];
+        this.pontos = 0;
+
+        this.carregarConfig();
+        this.carregarPlayer();
+        this.carregarInimigos();
+        this.carregarBlocos();
+
         this.addControls();
+
+        this.restartButtonCreated = false;
+
+
+        this.iniciarSpawnTriangulos();
+
         this.loop();
     }
 
-    getDifficultySettings(mode) {
-        const modes = {
-            Easy: { enemyCount: 5, enemySpeedMin: 1, enemySpeedMax: 3 },
-            Medium: { enemyCount: 13, enemySpeedMin: 2, enemySpeedMax: 5 },
-            Hard: { enemyCount: 20, enemySpeedMin: 3, enemySpeedMax: 7 }
-        };
-        return modes[mode] || modes.Easy;
+    carregarConfig() {
+        const c = this.container.querySelector("config") || this.container.querySelector("[data-type='config']");
+        this.dificuldade = c ? (c.getAttribute("dificuldade") || c.dataset.dificuldade) : "Easy";
     }
 
-    getcollectettings(mode) {
-        const modes = {
-            Easy: { count: 5, respawnTime: 1000 },
-            Medium: { count: 6, respawnTime: 2000 },
-            Hard: { count: 2, respawnTime: 5000 }
-        };
-        return modes[mode] || modes.Easy;
-    }
+    carregarPlayer() {
+        const p = this.container.querySelector("player") || this.container.querySelector("[data-type='player']");
 
-    createEnemies() {
-        for (let i = 0; i < this.settings.enemyCount; i++) {
-            this.enemies.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                radius: 20,
-                dx: (Math.random() * (this.settings.enemySpeedMax - this.settings.enemySpeedMin)) + this.settings.enemySpeedMin,
-                dy: (Math.random() * (this.settings.enemySpeedMax - this.settings.enemySpeedMin)) + this.settings.enemySpeedMin,
-                color: "red"
-            });
+        if (!p) {
+            this.player = { x: 50, y: 50, size: 40, color: "blue", speed: 8 };
+            return;
         }
+        //adaptei
+        const x = Number(p.getAttribute("x") || p.dataset.x) || 50;
+        const y = Number(p.getAttribute("y") || p.dataset.y) || 50;
+        const size = Number(p.getAttribute("size") || p.dataset.size) || 40;
+        const color = p.getAttribute("cor") || p.dataset.cor || "blue";
+
+        this.player = { x, y, size, color, speed: 12 };
     }
 
-    createcollect() {
-        for (let i = 0; i < this.collectSettings.count; i++) {
-            this.collect.push(this.createTriangle());
-        }
-    }
+    carregarInimigos() {
+        this.enemies = [];
+        const enemiesHTML = this.container.querySelectorAll("enemy, [data-type='enemy']");
 
-    createTriangle() {
-        return {
-            x: Math.random() * this.canvas.width,
-            y: Math.random() * this.canvas.height,
-            size: 25,
-            color: "yellow",
-            collected: false
-        };
-    }
+        enemiesHTML.forEach(el => {
+            const x = Number(el.getAttribute("x") || el.dataset.x) || 0;
+            const y = Number(el.getAttribute("y") || el.dataset.y) || 0;
+            const raio = Number(el.getAttribute("raio") || el.dataset.raio) || 10;
+            const dx = Number(el.getAttribute("dx") || el.dataset.dx) || 2;
+            const dy = Number(el.getAttribute("dy") || el.dataset.dy) || 2;
+            const color = el.getAttribute("cor") || el.dataset.cor || "red";
 
-    addControls() {
-        window.addEventListener("keydown", (event) => {
-            if (this.gameOver) return;
-
-            const key = event.key;
-
-            if (key === "ArrowUp" && this.square.y > 0) this.square.y -= this.square.speed;
-            else if (key === "ArrowDown" && this.square.y + this.square.size < this.canvas.height) this.square.y += this.square.speed;
-            else if (key === "ArrowLeft" && this.square.x > 0) this.square.x -= this.square.speed;
-            else if (key === "ArrowRight" && this.square.x + this.square.size < this.canvas.width) this.square.x += this.square.speed;
+            this.enemies.push({ x, y, radius: raio, dx, dy, color });
         });
     }
 
-    drawSquare() {
-        this.ctx.fillStyle = this.square.color;
-        this.ctx.fillRect(this.square.x, this.square.y, this.square.size, this.square.size);
+    carregarBlocos() {
+        this.blocks = [];
+        const blocksHTML = this.container.querySelectorAll("obstaculo, [data-type='block'], [data-type='obstaculo']");
+
+        blocksHTML.forEach(el => {
+            const x = Number(el.getAttribute("x") || el.dataset.x) || 0;
+            const y = Number(el.getAttribute("y") || el.dataset.y) || 0;
+            const width = Number(el.getAttribute("largura") || el.dataset.largura || el.dataset.width) || 50;
+            const height = Number(el.getAttribute("altura") || el.dataset.altura || el.dataset.height) || 10;
+            const color = el.getAttribute("cor") || el.dataset.cor || "black";
+
+            this.blocks.push({ x, y, width, height, color });
+        });
+    }
+
+    addControls() {
+        this._keydownHandler = (event) => {
+            const key = event.key;
+
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+                event.preventDefault();
+            }
+
+            let px = this.player.x;
+            let py = this.player.y;
+
+            if (key === "ArrowUp") py -= this.player.speed;
+            if (key === "ArrowDown") py += this.player.speed;
+            if (key === "ArrowLeft") px -= this.player.speed;
+            if (key === "ArrowRight") px += this.player.speed;
+
+            px = Math.max(0, Math.min(px, this.canvas.width - this.player.size));
+            py = Math.max(0, Math.min(py, this.canvas.height - this.player.size));
+
+            if (!this.colideBloco(px, py, this.player.size)) {
+                this.player.x = px;
+                this.player.y = py;
+            }
+        };
+
+        window.addEventListener("keydown", this._keydownHandler);
+    }
+
+
+    spawnTriangulo() {
+        const size = 25;
+        const x = Math.random() * (this.canvas.width - size);
+        const y = Math.random() * (this.canvas.height - size);
+
+        this.triangulos.push({ x, y, size });
+    }
+
+    iniciarSpawnTriangulos() {
+        let intervalo = 3000;
+
+        if (this.dificuldade === "Medium") intervalo = 2000;
+        if (this.dificuldade === "Hard") intervalo = 1200;
+
+        setInterval(() => {
+            if (!this.gameOver) this.spawnTriangulo();
+        }, intervalo);
+    }
+
+    drawTriangulos() {
+        for (let t of this.triangulos) {
+            this.ctx.fillStyle = "yellow";
+            this.ctx.beginPath();
+            this.ctx.moveTo(t.x, t.y + t.size);
+            this.ctx.lineTo(t.x + t.size / 2, t.y);
+            this.ctx.lineTo(t.x + t.size, t.y + t.size);
+            this.ctx.closePath();
+            this.ctx.fill();
+        }
+    }
+
+    coletarTriangulos() {
+        this.triangulos = this.triangulos.filter(t => {
+            if (
+                this.player.x < t.x + t.size &&
+                this.player.x + this.player.size > t.x &&
+                this.player.y < t.y + t.size &&
+                this.player.y + this.player.size > t.y
+            ) {
+                this.pontos++;
+                return false;
+            }
+            return true;
+        });
+    }
+
+    drawPlayer() {
+        this.ctx.fillStyle = this.player.color;
+        this.ctx.fillRect(this.player.x, this.player.y, this.player.size, this.player.size);
     }
 
     drawEnemies() {
-        for (let enemy of this.enemies) {
+        for (let e of this.enemies) {
             this.ctx.beginPath();
-            this.ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = enemy.color;
+            this.ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = e.color;
             this.ctx.fill();
-            this.ctx.closePath();
         }
     }
 
-    drawcollect() {
-        for (let item of this.collect) {
-            if (item.collected) continue;
-
-            this.ctx.beginPath();
-            this.ctx.moveTo(item.x, item.y - item.size);
-            this.ctx.lineTo(item.x - item.size, item.y + item.size);
-            this.ctx.lineTo(item.x + item.size, item.y + item.size);
-            this.ctx.closePath();
-
-            this.ctx.fillStyle = item.color;
-            this.ctx.fill();
+    drawBlocks() {
+        for (let b of this.blocks) {
+            this.ctx.fillStyle = b.color;
+            this.ctx.fillRect(b.x, b.y, b.width, b.height);
         }
+    }
+
+    colideBloco(x, y, size) {
+        for (let b of this.blocks) {
+            if (
+                x < b.x + b.width &&
+                x + size > b.x &&
+                y < b.y + b.height &&
+                y + size > b.y
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     moveEnemies() {
-        for (let enemy of this.enemies) {
-            enemy.x += enemy.dx;
-            enemy.y += enemy.dy;
+        for (let e of this.enemies) {
+            e.x += e.dx;
+            e.y += e.dy;
 
-            if (enemy.x + enemy.radius > this.canvas.width || enemy.x - enemy.radius < 0) {
-                enemy.dx *= -1;
+            if (e.x + e.radius > this.canvas.width) {
+                e.x = this.canvas.width - e.radius;
+                e.dx *= -1;
+            } else if (e.x - e.radius < 0) {
+                e.x = e.radius;
+                e.dx *= -1;
             }
 
-            if (enemy.y + enemy.radius > this.canvas.height || enemy.y - enemy.radius < 0) {
-                enemy.dy *= -1;
+            if (e.y + e.radius > this.canvas.height) {
+                e.y = this.canvas.height - e.radius;
+                e.dy *= -1;
+            } else if (e.y - e.radius < 0) {
+                e.y = e.radius;
+                e.dy *= -1;
+            }
+
+            for (let b of this.blocks) {
+                const closestX = Math.max(b.x, Math.min(e.x, b.x + b.width));
+                const closestY = Math.max(b.y, Math.min(e.y, b.y + b.height));
+                const dx = e.x - closestX;
+                const dy = e.y - closestY;
+                if (Math.sqrt(dx * dx + dy * dy) < e.radius) {
+                    e.dx *= -1;
+                    e.dy *= -1;
+                    e.x += e.dx;
+                    e.y += e.dy;
+                }
             }
         }
     }
 
     checkCollision() {
-        for (let enemy of this.enemies) {
-            let distX = Math.max(this.square.x, Math.min(enemy.x, this.square.x + this.square.size));
-            let distY = Math.max(this.square.y, Math.min(enemy.y, this.square.y + this.square.size));
-
-            let dx = enemy.x - distX;
-            let dy = enemy.y - distY;
-
-            if (Math.sqrt(dx * dx + dy * dy) < enemy.radius) {
+        for (let e of this.enemies) {
+            const distX = Math.max(this.player.x, Math.min(e.x, this.player.x + this.player.size));
+            const distY = Math.max(this.player.y, Math.min(e.y, this.player.y + this.player.size));
+            const dx = e.x - distX;
+            const dy = e.y - distY;
+            if (Math.sqrt(dx * dx + dy * dy) < e.radius) {
                 this.gameOver = true;
-                this.showRestartButton();
+                this.criarBotaoReiniciar();
+                break;
             }
         }
     }
 
-    checkCollectibleCollision() {
-        for (let item of this.collect) {
-            if (item.collected) continue;
+    criarBotaoReiniciar() {
+        if (this.restartButtonCreated) return;
+        this.restartButtonCreated = true;
 
-            let insideX = this.square.x < item.x + item.size &&
-                this.square.x + this.square.size > item.x - item.size;
+        const btn = document.createElement("button");
+        btn.innerText = "Recomeçar";
+        btn.classList.add("restart-btn");
 
-            let insideY = this.square.y < item.y + item.size &&
-                this.square.y + this.square.size > item.y - item.size;
+        btn.onclick = () => {
+            window.removeEventListener("keydown", this._keydownHandler);
+            location.reload();
+        };
 
-            if (insideX && insideY) {
-                item.collected = true;
-                this.points++;
-
-                setTimeout(() => {
-                    Object.assign(item, this.createTriangle());
-                }, this.collectSettings.respawnTime);
-            }
-        }
+        document.body.appendChild(btn);
     }
 
-    showRestartButton() {
-        this.restartBtn = document.createElement("button");
-        this.restartBtn.innerText = "Recomeçar";
-        this.restartBtn.className = "restart-btn";
-        document.body.appendChild(this.restartBtn);
+    desenhaGameOver() {
+        this.ctx.fillStyle = "rgba(0,0,0,0.6)";
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.restartBtn.addEventListener("click", () => {
-            this.restartBtn.remove();
-            new EnemyDodgeGame(this.canvasId);
-        });
-    }
-
-    drawPoints() {
-        this.ctx.fillStyle = "black";
-        this.ctx.font = "28px Arial";
-        this.ctx.fillText("Pontos: " + this.points, 20, 40);
+        this.ctx.fillStyle = "white";
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "middle";
+        this.ctx.font = "48px Arial";
+        this.ctx.fillText("GAME OVER", this.canvas.width / 2, this.canvas.height / 2);
     }
 
     loop() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (this.gameOver) {
-            this.ctx.fillStyle = "black";
-            this.ctx.font = "40px Arial";
-            this.ctx.fillText("GAME OVER", this.canvas.width / 2 - 120, this.canvas.height / 2);
+            this.desenhaGameOver();
             return;
         }
 
-        this.drawSquare();
-        this.drawEnemies();
-        this.drawcollect();
-        this.drawPoints();
-
         this.moveEnemies();
+
+        this.drawBlocks();
+        this.drawPlayer();
+        this.drawEnemies();
+
+
+        this.drawTriangulos();
+        this.coletarTriangulos();
+
         this.checkCollision();
-        this.checkCollectibleCollision();
 
         requestAnimationFrame(() => this.loop());
     }
