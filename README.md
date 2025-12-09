@@ -18,7 +18,7 @@
     
     20 inimigos
 
-Velocidade alta (3–7)
+    Velocidade alta (3–7)
 
 ## Como alterar a dificuldade
 
