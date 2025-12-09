@@ -43,11 +43,30 @@ body {
     border-radius: 10px;
 }
 
-#Canvas {
+canvas {
     background: #fff;
     border: 3px solid #000;
     border-radius: 12px;
     box-shadow: 0 0 15px rgba(0,0,0,0.6);
     width: 100%;
     height: 100%;
+}
+
+
+.restart-btn {
+    position: fixed;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -20%);
+    padding: 20px 40px;
+    font-size: 22px;
+    background: #00d4ff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(0,0,0,0.6);
+}
+.restart-btn:hover {
+    background: aqua;
 }
