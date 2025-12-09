@@ -1,6 +1,7 @@
 # Framework-JogoFinal
 
-##Funcionalidades Principais
+## Funcionalidades Principais
+
 O jogador é um quadrado que se move com as setas do teclado.
 A posição, tamanho e cor (x->posição horizontal y->posição vertical size->tamanho e cor) podem ser definidos no próprio HTML:
         
